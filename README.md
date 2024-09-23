@@ -1,6 +1,6 @@
 # 🖥️ Desafio de Back-End - Quero Educação 🚀
 
-Bem-vindo(a) ao **Desafio de Back-End da Quero Educação**! 🎉  
+Bem-vindo(a) ao **Desafio de Back-End da Quero Educação**! 🎉
 Este desafio foi criado para avaliar suas habilidades em desenvolvimento de back-end, com foco na implementação de
 funcionalidades para filtrar e exibir ofertas de cursos.
 
@@ -10,13 +10,13 @@ Está pronto(a)? Vamos nessa! 👇
 
 ## 📋 O Desafio
 
-Seu objetivo é criar uma aplicação que exponha uma interface para consulta e filtragem de ofertas educacionais. Essa
+Seu objetivo é criar uma aplicação que exponha uma interface para consultar ofertas de bolsa de estudo. Essa
 interface pode ser implementada de duas formas, à sua escolha:
 
-- **API RESTful**: Ofereça endpoints para listagem, filtragem e ordenação das ofertas.
-- **Aplicação Console**: Implemente uma entrada de dados interativa via terminal.
+- **API RESTful ou Graphql**: Implemente endpoint(s) para consultar as ofertas **via solicitação HTTP**.
+- **CLI**: Implemente uma entrada de dados para consultar as ofertas **via terminal de comandos**.
 
-Os dados das ofertas estão disponíveis no arquivo `data.json`. Abaixo estão as tarefas detalhadas:
+Os dados das ofertas estão disponíveis no arquivo `data.json`. Segue abaixo a lista funcionalidades à serem implementadas:
 
 ### Funcionalidades
 
@@ -26,44 +26,49 @@ Os dados das ofertas estão disponíveis no arquivo `data.json`. Abaixo estão a
 
 2. **Listagem de Ofertas**:
 
-- Exiba todas as ofertas, retornando os dados nos seguintes formatos:
-    - O valor `presencial` deve ser exibido como `Presencial` 🏫.
-    - O valor `ead` deve ser exibido como `EaD` 🏠.
-    - Os valores de `level`:
-        - `bacharelado` → `Graduação (bacharelado)` 🎓.
-        - `tecnologo` → `Graduação (tecnólogo)` 🎓.
-        - `licenciatura` → `Graduação (licenciatura)` 🎓.
-    - Os valores `fullPrice` e `offeredPrice` devem ser formatados como moeda no formato brasileiro _(ex: `R$ 550,00`)_.
-    - Calcule e exiba a porcentagem de desconto com base nos preços (`fullPrice` e `offeredPrice`) no formato `27%` 📉.
+- [ ] Exiba todas as ofertas, retornando os dados nos seguintes formatos:
+    - [ ] O valor `presencial` deve ser exibido como `Presencial` 🏫.
+    - [ ] O valor `ead` deve ser exibido como `EaD` 🏠.
+    - [ ] Os valores de `level`:
+        - [ ] `bacharelado` → `Graduação (bacharelado)` 🎓.
+        - [ ] `tecnologo` → `Graduação (tecnólogo)` 🎓.
+        - [ ] `licenciatura` → `Graduação (licenciatura)` 🎓.
+    - [ ] Os valores `fullPrice` e `offeredPrice` devem ser formatados como moeda no formato brasileiro _(ex: `R$ 550,00`)_.
+    - [ ] Calcule e exiba a porcentagem de desconto com base nos preços (`fullPrice` e `offeredPrice`) no formato `27%` 📉.
 
 3. **Filtragem e Ordenação**:
 
-- Implemente filtros para as seguintes categorias:
-    - `level` (graduação, tecnólogo, licenciatura) 🎓.
-    - `kind` (presencial, EaD) 🏫.
-    - `offeredPrice` (permitir filtrar por um intervalo de valores) 📉.
-- Permita que múltiplos filtros sejam aplicados simultaneamente.
-- Implemente a busca de ofertas por nome, com correspondência **case-insensitive** 🔄.
-- Implemente ordenação por:
-    - Nome do curso 📝.
-    - Preço com desconto (`offeredPrice`) 📉.
-    - Avaliação (`rating`) 🌟.
+- [ ] Implemente filtros para as seguintes categorias:
+    - [ ] `level` (graduação, tecnólogo, licenciatura) 🎓.
+    - [ ] `kind` (presencial, EaD) 🏫.
+    - [ ] `offeredPrice` (permitir filtrar por um intervalo de valores) 📉.
+- [ ] Permita que múltiplos filtros sejam aplicados simultaneamente.
+- [ ] Implemente a busca de ofertas por nome, com correspondência **case-insensitive** 🔄.
+- [ ] Implemente ordenação por:
+    - [ ] Nome do curso 📝.
+    - [ ] Preço com desconto (`offeredPrice`) 📉.
+    - [ ] Avaliação (`rating`) 🌟.
 
 4. **Paginação**:
 
-- Implemente paginação nas ofertas retornadas.
-- Permita configurar a quantidade de itens por página.
+- [ ] Implemente paginação nas ofertas retornadas.
+  - [ ] Permita configurar a quantidade de itens por página.
+  - [ ] Permita navegar entre as páginas.
+
+5. **Retorno de propriedades selecionadas**:
+
+- [ ] Permita selecionar quais propriedades devem ser retornadas na consulta.
+  - [ ] Por exemplo, retornar apenas a propriedade `courseName` no resultado da consulta.
 
 ### Restrições
 
-- **Importante**: Não altere o arquivo `data.json` original. 🚫
+- **IMPORTANTE**: Não altere o arquivo `data.json` original. 🚫
 
 ---
 
 ## ⚙️ Tecnologias
 
-Você é livre para utilizar as tecnologias e ferramentas que preferir. Recomendamos que escolha aquilo com o que se sente
-mais confortável para resolver o desafio com qualidade. 🚀
+Você é livre para utilizar as tecnologias e ferramentas que preferir. Recomendamos que escolha aquilo com o que se sente mais confortável para resolver o desafio com qualidade e proficiência. 🚀
 
 ---
 
@@ -113,6 +118,7 @@ Os pontos que vamos avaliar são:
 - **Qualidade do código**: Clareza, organização e uso de boas práticas de desenvolvimento.
 - **Aderência às especificações**: Quanto mais próximo o resultado estiver das instruções dadas, melhor.
 - **Lógica e eficiência**: Capacidade de resolver problemas de maneira eficiente e lógica.
+- **Proficiência**: Habilidade e maestria com as tecnologias e ferramentas utilizadas.
 - **Documentação**: É importante que o projeto esteja bem documentado, facilitando sua execução por terceiros.
 
 ---
@@ -123,3 +129,4 @@ Os pontos que vamos avaliar são:
 - Organize seu código de forma limpa.
 - Comece pelas funcionalidades que você tem mais domínio.
 - Use as checkboxes no README para acompanhar o progresso das tarefas.
+- Reserve no mínimo 15 minutos para revisar e documentar sua solução.
