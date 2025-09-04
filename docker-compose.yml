@@ -1,0 +1,42 @@
+services:
+  # Serviço da nossa aplicação Nest.js
+  app:
+    build: .
+    container_name: quero_app
+    ports:
+      - "3000:3000"
+    volumes:
+      # Monta o código-fonte local no container para desenvolvimento (hot-reload)
+      - .:/usr/src/app
+      # Evita que a pasta node_modules local sobrescreva a do container
+      - /usr/src/app/node_modules
+    # Carrega as variáveis do arquivo .env
+    env_file:
+      - .env
+    # A aplicação 'app' só vai iniciar depois que o serviço 'db' estiver saudável
+    depends_on:
+      db:
+        condition: service_healthy
+    command: npm run start:dev
+
+  # Serviço do banco de dados PostgreSQL
+  db:
+    image: postgres:14
+    container_name: quero_db
+    ports:
+      - "5432:5432"
+    env_file:
+      - .env
+    volumes:
+      # Garante que os dados do banco persistam mesmo se o container for removido
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      # Testa se o banco de dados está pronto para aceitar conexões
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  # Define o volume nomeado para persistência dos dados
+  postgres_data:
