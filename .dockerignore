@@ -1,0 +1,13 @@
+# Ignora dependências locais, pois elas serão instaladas dentro do container
+node_modules
+
+# Arquivos de log e de configuração do Docker
+npm-debug.log
+Dockerfile
+.dockerignore
+docker-compose.yml
+
+# Outros
+dist
+.git
+.env

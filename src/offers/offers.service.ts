@@ -2,9 +2,15 @@
 
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
 import { Offer } from './entities/offer.entity';
 import { OfferResponseDto } from './dto/offer.response.dto';
+import { FilterOfferDto } from './dto/filter-offer.dto'; // Importe o DTO de filtros
+import {
+  Between,
+  FindManyOptions,
+  FindOptionsWhere,
+  Repository,
+} from 'typeorm'; // Importe o 'Between' do TypeORM
 
 @Injectable()
 export class OffersService {
@@ -13,9 +19,31 @@ export class OffersService {
     private readonly offerRepository: Repository<Offer>,
   ) {}
 
-  async findAll(): Promise<OfferResponseDto[]> {
-    const offers = await this.offerRepository.find();
-    // Mapeia cada oferta para o formato de resposta desejado
+  async findAll(filters: FilterOfferDto): Promise<OfferResponseDto[]> {
+    const { kind, level, minPrice, maxPrice } = filters;
+
+    // 1. Crie a cláusula 'where' separadamente com o tipo correto
+    const whereClause: FindOptionsWhere<Offer> = {};
+
+    // 2. Adicione as condições a este objeto. Agora é seguro!
+    if (kind) {
+      whereClause.kind = kind;
+    }
+
+    if (level) {
+      whereClause.level = level;
+    }
+
+    if (minPrice && maxPrice) {
+      whereClause.offeredPrice = Between(Number(minPrice), Number(maxPrice));
+    }
+
+    // 3. Monte o objeto de opções final
+    const queryOptions: FindManyOptions<Offer> = {
+      where: whereClause,
+    };
+
+    const offers = await this.offerRepository.find(queryOptions);
     return offers.map((offer) => this.formatOfferResponse(offer));
   }
 
