@@ -9,6 +9,7 @@ import {
   Between,
   FindManyOptions,
   FindOptionsWhere,
+  ILike,
   Repository,
 } from 'typeorm'; // Importe o 'Between' do TypeORM
 
@@ -20,7 +21,8 @@ export class OffersService {
   ) {}
 
   async findAll(filters: FilterOfferDto): Promise<OfferResponseDto[]> {
-    const { kind, level, minPrice, maxPrice } = filters;
+    const { kind, level, minPrice, maxPrice, courseName, sortBy, orderBy } =
+      filters;
 
     // 1. Crie a cláusula 'where' separadamente com o tipo correto
     const whereClause: FindOptionsWhere<Offer> = {};
@@ -38,10 +40,19 @@ export class OffersService {
       whereClause.offeredPrice = Between(Number(minPrice), Number(maxPrice));
     }
 
+    if (courseName) {
+      // Usa ILike para busca parcial (% wildcard) e case-insensitive
+      whereClause.courseName = ILike(`%${courseName}%`);
+    }
+
     // 3. Monte o objeto de opções final
     const queryOptions: FindManyOptions<Offer> = {
       where: whereClause,
     };
+
+    if (sortBy) {
+      queryOptions.order = { [sortBy]: orderBy || 'ASC' };
+    }
 
     const offers = await this.offerRepository.find(queryOptions);
     return offers.map((offer) => this.formatOfferResponse(offer));

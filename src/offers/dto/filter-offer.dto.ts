@@ -1,6 +1,6 @@
 // src/offers/dto/filter-offer.dto.ts
 
-import { IsOptional, IsString, IsNumberString } from 'class-validator';
+import { IsOptional, IsString, IsNumberString, IsIn } from 'class-validator';
 
 export class FilterOfferDto {
   @IsOptional()
@@ -18,4 +18,17 @@ export class FilterOfferDto {
   @IsOptional()
   @IsNumberString()
   maxPrice?: string;
+
+  @IsOptional()
+  @IsString()
+  courseName?: string;
+
+  @IsOptional()
+  @IsString()
+  @IsIn(['courseName', 'offeredPrice', 'rating']) // Valida os valores permitidos
+  sortBy?: string;
+
+  @IsOptional()
+  @IsIn(['ASC', 'DESC']) // Valida os valores permitidos
+  orderBy?: 'ASC' | 'DESC';
 }
