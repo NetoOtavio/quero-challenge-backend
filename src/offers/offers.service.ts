@@ -12,6 +12,7 @@ import {
   ILike,
   Repository,
 } from 'typeorm'; // Importe o 'Between' do TypeORM
+import { PaginatedOffersResponseDto } from './dto/paginated-offers.respons.dto';
 
 @Injectable()
 export class OffersService {
@@ -20,42 +21,61 @@ export class OffersService {
     private readonly offerRepository: Repository<Offer>,
   ) {}
 
-  async findAll(filters: FilterOfferDto): Promise<OfferResponseDto[]> {
+  async findAll(filters: FilterOfferDto): Promise<PaginatedOffersResponseDto> {
+    // 1. Extrai page e limit, definindo valores padrão
+    const page = filters.page || 1;
+    const limit = filters.limit || 10;
+    const skip = (page - 1) * limit; // Calcula o offset
+
+    // ... (lógica do whereClause permanece a mesma)
     const { kind, level, minPrice, maxPrice, courseName, sortBy, orderBy } =
       filters;
-
-    // 1. Crie a cláusula 'where' separadamente com o tipo correto
     const whereClause: FindOptionsWhere<Offer> = {};
-
-    // 2. Adicione as condições a este objeto. Agora é seguro!
     if (kind) {
       whereClause.kind = kind;
     }
-
     if (level) {
       whereClause.level = level;
     }
-
     if (minPrice && maxPrice) {
       whereClause.offeredPrice = Between(Number(minPrice), Number(maxPrice));
     }
-
     if (courseName) {
-      // Usa ILike para busca parcial (% wildcard) e case-insensitive
       whereClause.courseName = ILike(`%${courseName}%`);
     }
 
-    // 3. Monte o objeto de opções final
     const queryOptions: FindManyOptions<Offer> = {
       where: whereClause,
+      take: limit, // 2. 'take' é o limite de itens por página
+      skip: skip, // 3. 'skip' é quantos itens pular
     };
 
     if (sortBy) {
       queryOptions.order = { [sortBy]: orderBy || 'ASC' };
     }
 
-    const offers = await this.offerRepository.find(queryOptions);
-    return offers.map((offer) => this.formatOfferResponse(offer));
+    // 4. Usa 'findAndCount' em vez de 'find'
+    const [offers, totalItems] =
+      await this.offerRepository.findAndCount(queryOptions);
+
+    // 5. Formata os dados da página atual
+    const formattedData = offers.map((offer) =>
+      this.formatOfferResponse(offer),
+    );
+
+    // 6. Calcula os metadados
+    const totalPages = Math.ceil(totalItems / limit);
+
+    // 7. Retorna o objeto de resposta paginada completo
+    return {
+      data: formattedData,
+      metadata: {
+        totalItems,
+        totalPages,
+        currentPage: page,
+        itemsPerPage: limit,
+      },
+    };
   }
 
   private formatOfferResponse(offer: Offer): OfferResponseDto {

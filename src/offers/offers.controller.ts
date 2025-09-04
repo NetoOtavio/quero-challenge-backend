@@ -2,8 +2,8 @@
 
 import { Controller, Get, Query } from '@nestjs/common';
 import { OffersService } from './offers.service';
-import { OfferResponseDto } from './dto/offer.response.dto';
 import { FilterOfferDto } from './dto/filter-offer.dto'; // Importe o novo DTO
+import { PaginatedOffersResponseDto } from './dto/paginated-offers.respons.dto';
 
 @Controller('offers')
 export class OffersController {
@@ -12,7 +12,7 @@ export class OffersController {
   @Get()
   findAll(
     @Query() filters: FilterOfferDto, // Use o decorator @Query
-  ): Promise<OfferResponseDto[]> {
+  ): Promise<PaginatedOffersResponseDto> {
     return this.offersService.findAll(filters); // Passe os filtros para o serviço
   }
 }

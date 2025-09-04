@@ -1,6 +1,13 @@
 // src/offers/dto/filter-offer.dto.ts
 
-import { IsOptional, IsString, IsNumberString, IsIn } from 'class-validator';
+import { Type } from 'class-transformer';
+import {
+  IsOptional,
+  IsString,
+  IsNumberString,
+  IsIn,
+  Min,
+} from 'class-validator';
 
 export class FilterOfferDto {
   @IsOptional()
@@ -31,4 +38,14 @@ export class FilterOfferDto {
   @IsOptional()
   @IsIn(['ASC', 'DESC']) // Valida os valores permitidos
   orderBy?: 'ASC' | 'DESC';
+
+  @IsOptional()
+  @Type(() => Number) // 2. Transforma a string da URL em número
+  @Min(1) // 3. Garante que a página seja no mínimo 1
+  page?: number;
+
+  @IsOptional()
+  @Type(() => Number)
+  @Min(1)
+  limit?: number;
 }
