@@ -7,6 +7,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { Offer } from './offers/entities/offer.entity';
 import { SeedingService } from './database/seeding.service';
+import { OffersModule } from './offers/offers.module';
 
 @Module({
   imports: [
@@ -33,6 +34,8 @@ import { SeedingService } from './database/seeding.service';
 
     // 3. Importa o repositório da entidade Offer para o SeedingService usar
     TypeOrmModule.forFeature([Offer]),
+
+    OffersModule,
   ],
   controllers: [AppController],
   // 4. Registra o SeedingService para que ele seja executado na inicialização
