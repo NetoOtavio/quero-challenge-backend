@@ -12,6 +12,6 @@ export class PaginationMetadata {
 
 // DTO principal para a resposta
 export class PaginatedOffersResponseDto {
-  data: OfferResponseDto[];
+  data: Partial<OfferResponseDto>[];
   metadata: PaginationMetadata;
 }

@@ -48,4 +48,8 @@ export class FilterOfferDto {
   @Type(() => Number)
   @Min(1)
   limit?: number;
+
+  @IsOptional()
+  @IsString()
+  fields?: string;
 }

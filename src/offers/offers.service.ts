@@ -1,17 +1,18 @@
-// src/offers/offers.service.ts
-
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Offer } from './entities/offer.entity';
-import { OfferResponseDto } from './dto/offer.response.dto';
-import { FilterOfferDto } from './dto/filter-offer.dto'; // Importe o DTO de filtros
 import {
   Between,
   FindManyOptions,
   FindOptionsWhere,
   ILike,
+  LessThanOrEqual,
+  MoreThanOrEqual,
   Repository,
-} from 'typeorm'; // Importe o 'Between' do TypeORM
+} from 'typeorm';
+import { Offer } from './entities/offer.entity';
+import { FilterOfferDto } from './dto/filter-offer.dto';
+
+import { OfferResponseDto } from './dto/offer.response.dto';
 import { PaginatedOffersResponseDto } from './dto/paginated-offers.respons.dto';
 
 @Injectable()
@@ -22,51 +23,77 @@ export class OffersService {
   ) {}
 
   async findAll(filters: FilterOfferDto): Promise<PaginatedOffersResponseDto> {
-    // 1. Extrai page e limit, definindo valores padrão
-    const page = filters.page || 1;
-    const limit = filters.limit || 10;
-    const skip = (page - 1) * limit; // Calcula o offset
+    const {
+      page = 1,
+      limit = 10,
+      kind,
+      level,
+      minPrice,
+      maxPrice,
+      courseName,
+      sortBy,
+      orderBy,
+      fields,
+    } = filters;
 
-    // ... (lógica do whereClause permanece a mesma)
-    const { kind, level, minPrice, maxPrice, courseName, sortBy, orderBy } =
-      filters;
+    const skip = (page - 1) * limit;
+
     const whereClause: FindOptionsWhere<Offer> = {};
-    if (kind) {
-      whereClause.kind = kind;
-    }
-    if (level) {
-      whereClause.level = level;
-    }
+    if (kind) whereClause.kind = kind;
+    if (level) whereClause.level = level;
+    if (courseName) whereClause.courseName = ILike(`%${courseName}%`);
     if (minPrice && maxPrice) {
       whereClause.offeredPrice = Between(Number(minPrice), Number(maxPrice));
-    }
-    if (courseName) {
-      whereClause.courseName = ILike(`%${courseName}%`);
+    } else if (minPrice) {
+      whereClause.offeredPrice = MoreThanOrEqual(Number(minPrice));
+    } else if (maxPrice) {
+      whereClause.offeredPrice = LessThanOrEqual(Number(maxPrice));
     }
 
     const queryOptions: FindManyOptions<Offer> = {
       where: whereClause,
-      take: limit, // 2. 'take' é o limite de itens por página
-      skip: skip, // 3. 'skip' é quantos itens pular
+      take: limit,
+      skip: skip,
     };
 
     if (sortBy) {
       queryOptions.order = { [sortBy]: orderBy || 'ASC' };
     }
 
-    // 4. Usa 'findAndCount' em vez de 'find'
+    const requestedFields = fields?.split(',').map((field) => field.trim());
+
+    if (requestedFields) {
+      const dbSelectFields = new Set<keyof Offer>();
+      const offerKeys = this.offerRepository.metadata.columns.map(
+        (col) => col.propertyName as keyof Offer,
+      );
+
+      requestedFields.forEach((field) => {
+        if (offerKeys.includes(field as keyof Offer)) {
+          dbSelectFields.add(field as keyof Offer);
+        }
+      });
+
+      if (requestedFields.includes('discountPercentage')) {
+        dbSelectFields.add('fullPrice');
+        dbSelectFields.add('offeredPrice');
+      }
+
+      if (dbSelectFields.size > 0) {
+        queryOptions.select = Array.from(dbSelectFields);
+      }
+    }
+
     const [offers, totalItems] =
       await this.offerRepository.findAndCount(queryOptions);
 
-    // 5. Formata os dados da página atual
+    // O método 'findAll' agora está mais simples. Ele apenas delega a formatação.
     const formattedData = offers.map((offer) =>
-      this.formatOfferResponse(offer),
+      this.formatOfferResponse(offer, requestedFields),
     );
 
-    // 6. Calcula os metadados
     const totalPages = Math.ceil(totalItems / limit);
 
-    // 7. Retorna o objeto de resposta paginada completo
     return {
       data: formattedData,
       metadata: {
@@ -78,60 +105,90 @@ export class OffersService {
     };
   }
 
-  private formatOfferResponse(offer: Offer): OfferResponseDto {
-    const fullPrice = Number(offer.fullPrice);
-    const offeredPrice = Number(offer.offeredPrice);
+  /**
+   * Função auxiliar para converter o objeto da entidade (Offer)
+   * no DTO de resposta, aplicando formatações.
+   * Ela é resiliente e só formata/calcula os campos cujos dados brutos existirem.
+   */
+  private formatOfferResponse(
+    offer: Partial<Offer>,
+    requestedFields?: string[],
+  ): Partial<OfferResponseDto> {
+    const response: Partial<OfferResponseDto> = {};
 
-    const formatCurrency = (value: number) => {
-      return new Intl.NumberFormat('pt-BR', {
-        style: 'currency',
-        currency: 'BRL',
-      }).format(value);
-    };
+    // Se nenhum campo foi solicitado, retornamos o DTO completo.
+    const fieldsToProcess =
+      requestedFields || Object.keys(new OfferResponseDto());
 
-    // Lógica explícita para formatar o 'kind'
-    let formattedKind: string;
-    switch (offer.kind) {
-      case 'presencial':
-        formattedKind = 'Presencial 🏫';
-        break;
-      case 'ead':
-        formattedKind = 'EaD 🏠';
-        break;
-      default:
-        formattedKind = offer.kind; // Valor padrão caso não seja nenhum dos acima
+    for (const field of fieldsToProcess) {
+      const key = field as keyof OfferResponseDto;
+
+      // Usamos 'switch' para lidar com cada campo solicitado.
+      // Isso é explícito e 100% type-safe.
+      switch (key) {
+        case 'courseName':
+          if (offer.courseName !== undefined)
+            response.courseName = offer.courseName;
+          break;
+        case 'rating':
+          if (offer.rating !== undefined) response.rating = offer.rating;
+          break;
+        case 'iesLogo':
+          if (offer.iesLogo !== undefined) response.iesLogo = offer.iesLogo;
+          break;
+        case 'iesName':
+          if (offer.iesName !== undefined) response.iesName = offer.iesName;
+          break;
+        case 'fullPrice':
+          if (offer.fullPrice !== undefined) {
+            response.fullPrice = new Intl.NumberFormat('pt-BR', {
+              style: 'currency',
+              currency: 'BRL',
+            }).format(Number(offer.fullPrice));
+          }
+          break;
+        case 'offeredPrice':
+          if (offer.offeredPrice !== undefined) {
+            response.offeredPrice = new Intl.NumberFormat('pt-BR', {
+              style: 'currency',
+              currency: 'BRL',
+            }).format(Number(offer.offeredPrice));
+          }
+          break;
+        case 'kind':
+          if (offer.kind) {
+            response.kind =
+              offer.kind === 'presencial' ? 'Presencial 🏫' : 'EaD 🏠';
+          }
+          break;
+        case 'level':
+          if (offer.level) {
+            switch (offer.level) {
+              case 'bacharelado':
+                response.level = 'Graduação (bacharelado) 🎓';
+                break;
+              case 'tecnologo':
+                response.level = 'Graduação (tecnólogo) 🎓';
+                break;
+              case 'licenciatura':
+                response.level = 'Graduação (licenciatura) 🎓';
+                break;
+            }
+          }
+          break;
+        case 'discountPercentage':
+          if (
+            offer.fullPrice !== undefined &&
+            offer.offeredPrice !== undefined
+          ) {
+            const full = Number(offer.fullPrice);
+            const offered = Number(offer.offeredPrice);
+            const discount = Math.round(((full - offered) / full) * 100);
+            response.discountPercentage = `${discount}%`;
+          }
+          break;
+      }
     }
-
-    // Lógica explícita para formatar o 'level'
-    let formattedLevel: string;
-    switch (offer.level) {
-      case 'bacharelado':
-        formattedLevel = 'Graduação (bacharelado) 🎓';
-        break;
-      case 'tecnologo':
-        formattedLevel = 'Graduação (tecnólogo) 🎓';
-        break;
-      case 'licenciatura':
-        formattedLevel = 'Graduação (licenciatura) 🎓';
-        break;
-      default:
-        formattedLevel = offer.level;
-    }
-
-    const discountPercentage = Math.round(
-      ((fullPrice - offeredPrice) / fullPrice) * 100,
-    );
-
-    return {
-      courseName: offer.courseName,
-      rating: offer.rating,
-      fullPrice: formatCurrency(fullPrice),
-      offeredPrice: formatCurrency(offeredPrice),
-      discountPercentage: `${discountPercentage}% 📉`,
-      kind: formattedKind, // Usa a variável formatada
-      level: formattedLevel, // Usa a variável formatada
-      iesLogo: offer.iesLogo,
-      iesName: offer.iesName,
-    };
+    return response;
   }
 }
