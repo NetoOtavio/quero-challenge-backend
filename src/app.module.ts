@@ -1,8 +1,4 @@
-// src/app.module.ts
-
 import { Module } from '@nestjs/common';
-import { AppController } from './app.controller';
-import { AppService } from './app.service';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { Offer } from './offers/entities/offer.entity';
@@ -11,12 +7,10 @@ import { OffersModule } from './offers/offers.module';
 
 @Module({
   imports: [
-    // 1. Módulo de configuração para ler o .env
     ConfigModule.forRoot({
-      isGlobal: true, // Torna as variáveis de ambiente disponíveis globalmente
+      isGlobal: true,
     }),
 
-    // 2. Módulo de conexão com o banco de dados
     TypeOrmModule.forRootAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
@@ -32,13 +26,10 @@ import { OffersModule } from './offers/offers.module';
       }),
     }),
 
-    // 3. Importa o repositório da entidade Offer para o SeedingService usar
     TypeOrmModule.forFeature([Offer]),
 
     OffersModule,
   ],
-  controllers: [AppController],
-  // 4. Registra o SeedingService para que ele seja executado na inicialização
-  providers: [AppService, SeedingService],
+  providers: [SeedingService],
 })
 export class AppModule {}

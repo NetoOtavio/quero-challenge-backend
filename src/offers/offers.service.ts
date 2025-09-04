@@ -36,8 +36,7 @@ export class OffersService {
       fields,
     } = filters;
 
-    const skip = (page - 1) * limit;
-
+    // Construir condições para a consulta
     const whereClause: FindOptionsWhere<Offer> = {};
     if (kind) whereClause.kind = kind;
     if (level) whereClause.level = level;
@@ -50,6 +49,20 @@ export class OffersService {
       whereClause.offeredPrice = LessThanOrEqual(Number(maxPrice));
     }
 
+    // Primeiro, obtemos apenas o total de itens para calcular o total de páginas
+    const totalItems = await this.offerRepository.count({ where: whereClause });
+    const totalPages = Math.ceil(totalItems / limit);
+
+    // Ajustar a página atual se ela for maior que o total de páginas
+    let currentPage = page;
+    if (totalItems > 0 && currentPage > totalPages) {
+      currentPage = totalPages;
+    }
+
+    // Calcular o offset baseado na página ajustada
+    const skip = (currentPage - 1) * limit;
+
+    // Configurar opções de consulta para buscar os resultados reais
     const queryOptions: FindManyOptions<Offer> = {
       where: whereClause,
       take: limit,
@@ -84,22 +97,19 @@ export class OffersService {
       }
     }
 
-    const [offers, totalItems] =
-      await this.offerRepository.findAndCount(queryOptions);
+    // Buscar ofertas com a página ajustada
+    const [offers] = await this.offerRepository.findAndCount(queryOptions);
 
-    // O método 'findAll' agora está mais simples. Ele apenas delega a formatação.
     const formattedData = offers.map((offer) =>
       this.formatOfferResponse(offer, requestedFields),
     );
-
-    const totalPages = Math.ceil(totalItems / limit);
 
     return {
       data: formattedData,
       metadata: {
         totalItems,
         totalPages,
-        currentPage: page,
+        currentPage, // Usando a página ajustada aqui
         itemsPerPage: limit,
       },
     };
@@ -116,15 +126,12 @@ export class OffersService {
   ): Partial<OfferResponseDto> {
     const response: Partial<OfferResponseDto> = {};
 
-    // Se nenhum campo foi solicitado, retornamos o DTO completo.
     const fieldsToProcess =
       requestedFields || Object.keys(new OfferResponseDto());
 
     for (const field of fieldsToProcess) {
       const key = field as keyof OfferResponseDto;
 
-      // Usamos 'switch' para lidar com cada campo solicitado.
-      // Isso é explícito e 100% type-safe.
       switch (key) {
         case 'courseName':
           if (offer.courseName !== undefined)
